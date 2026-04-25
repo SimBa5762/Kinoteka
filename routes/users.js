@@ -80,3 +80,14 @@ router.get('/profile', (req, res) => {
         res.status(401).json({ message: 'User not logged in' });
     }
 });
+
+route.get('/delete-account', (req, res) => {
+    if (req.session.user) {
+        const user = req.session.user;
+        dbManager.deleteUser(user.mail);
+        req.session.destroy();
+        res.json({ message: 'Account deleted successfully' });
+    } else {
+        res.status(401).json({ message: 'User not logged in' });
+    }
+});
