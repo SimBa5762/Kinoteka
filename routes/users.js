@@ -40,3 +40,35 @@ router.get('/login', (req, res) => {
     })
     
 });
+
+router.get('/logout', (req, res) => {
+    req.session.destroy();
+    res.json({ message: 'Logout successful' });
+});
+
+router.get('/register', (req, res) => {
+    const [password, email, name] = [req.query.password, req.query.email, req.query.name];
+
+    dbManager.getUser(email)
+    .then(user =>{
+        if(!user)
+        {
+            bcrypt.hash(password, 10, (err, hash) => {
+                if (err) {
+                    res.status(500).json({ message: 'Error hashing password' });
+                } else {
+                    const data = {
+                        name: email,
+                        mail: email,
+                        password: hash
+                    };
+                    dbManager.addUser(data);
+                    res.json({ message: 'Registration successful' });
+                }
+            });
+        }
+        else {
+            res.status(401).json({ message: 'User already exists' });
+        }
+    })
+})

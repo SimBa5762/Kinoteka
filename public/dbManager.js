@@ -136,6 +136,21 @@ class dbManager {
             });
         });
     }
+
+    addUser(data)
+    {
+        return new Promise((resolve, reject) => {
+            const { name, mail, password } = data;
+            db.run('INSERT INTO users (name, mail, password) VALUES (?, ?, ?)', [name, mail, password], 
+                function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
+    }
 }
 
 
