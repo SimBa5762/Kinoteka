@@ -151,6 +151,19 @@ class dbManager {
             });
         });
     }
+    deleteUser(email)
+    {
+        return new Promise((resolve, reject) => {
+            const { mail } = data;
+            db.run('DELETE FROM users WHERE mail = ?', [mail], function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
+    }
 }
 
 
