@@ -71,4 +71,12 @@ router.get('/register', (req, res) => {
             res.status(401).json({ message: 'User already exists' });
         }
     })
-})
+});
+
+router.get('/profile', (req, res) => {
+    if (req.session.user) {
+        res.json(req.session.user);
+    } else {
+        res.status(401).json({ message: 'User not logged in' });
+    }
+});
