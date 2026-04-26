@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const dbManager = require('../public/dbManager');
 
-router.get('/movies', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const genre = req.query.genre || '';
         // Чекаємо на виконання промісу
@@ -13,7 +13,7 @@ router.get('/movies', async (req, res) => {
     }
 });
 
-router.get('/movies/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         const movieId = parseInt(req.params.id);
         const movie = await dbManager.getMovieById(movieId);
@@ -24,7 +24,7 @@ router.get('/movies/:id', async (req, res) => {
     }
 });
 
-router.post('/movies', async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         // Замість ручного парсингу використовуємо req.body (потрібен app.use(express.json()) у server.js)
         await dbManager.addMovie(req.body);
@@ -34,7 +34,7 @@ router.post('/movies', async (req, res) => {
     }
 });
 
-router.put('/movies/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
     try {
         const movieId = parseInt(req.params.id);
         await dbManager.updateMovie(movieId, req.body); // Виправлено одруківку 'updatedMovie'
@@ -44,7 +44,7 @@ router.put('/movies/:id', async (req, res) => {
     }
 });
 
-router.delete('/movies/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const movieId = parseInt(req.params.id);
         await dbManager.deleteMovie(movieId);
@@ -54,20 +54,11 @@ router.delete('/movies/:id', async (req, res) => {
     }
 });
 
-router.post('/movies/:id/reviews', async (req, res) => {
+router.post('/:id/reviews', async (req, res) => {
     try {
         const movieId = parseInt(req.params.id);
         await dbManager.addReview(movieId, req.body);
         res.status(201).json({ message: 'Review added successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-router.get('/genres', async (req, res) => {
-    try {
-        const genres = await dbManager.getGenres();
-        res.json(genres);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
