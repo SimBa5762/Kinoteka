@@ -1,44 +1,38 @@
-const fs = require('fs');
-const path = require('path');
 const express = require('express');
 const router = express.Router();
 const dbManager = require('../public/dbManager');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
 
-
 router.use(
     session({
         secret: 'super-secret-key',
         saveUninitialized: false,
-        cookie: {
-            httpOnly:true,
-        },
+        cookie: { httpOnly: true },
         resave: false
     })
 );
 
-router.get('/login', (req, res) => {
-    const [password, email] = [req.query.password, req.query.email];
-
-    dbManager.getUser(email)
-    .then(user =>{
-        if(user)
-        {
-            bcrypt.compare(password, user.password, (err, result) => {
-                if (result) {
-                    req.session.user = user;
-                    res.json({ message: 'Login successful' });
-                } else {
-                    res.status(401).json({ message: 'Wrong password' });
-                }
-            });
-        }
-        else {
+// Виправлено: GET -> POST. Паролі не можна передавати в URL!
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await dbManager.getUser(email);
+        
+        if (user) {
+            const match = await bcrypt.compare(password, user.password);
+            if (match) {
+                req.session.user = { id: user.id, userName: user.userName, userMail: user.userMail };
+                res.json({ message: 'Login successful' });
+            } else {
+                res.status(401).json({ message: 'Wrong password' });
+            }
+        } else {
             res.status(401).json({ message: 'User not found' });
         }
-    })
-    
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 router.get('/logout', (req, res) => {
@@ -46,31 +40,27 @@ router.get('/logout', (req, res) => {
     res.json({ message: 'Logout successful' });
 });
 
-router.get('/register', (req, res) => {
-    const [password, email, name] = [req.query.password, req.query.email, req.query.name];
+// Виправлено: GET -> POST. 
+router.post('/register', async (req, res) => {
+    try {
+        const { name, email, password } = req.body;
+        const existingUser = await dbManager.getUser(email);
 
-    dbManager.getUser(email)
-    .then(user =>{
-        if(!user)
-        {
-            bcrypt.hash(password, 10, (err, hash) => {
-                if (err) {
-                    res.status(500).json({ message: 'Error hashing password' });
-                } else {
-                    const data = {
-                        name: email,
-                        mail: email,
-                        password: hash
-                    };
-                    dbManager.addUser(data);
-                    res.json({ message: 'Registration successful' });
-                }
-            });
-        }
-        else {
+        if (!existingUser) {
+            const hash = await bcrypt.hash(password, 10);
+            const data = {
+                name: name, // Виправлено: було name: email
+                mail: email,
+                password: hash
+            };
+            await dbManager.addUser(data);
+            res.status(201).json({ message: 'Registration successful' });
+        } else {
             res.status(401).json({ message: 'User already exists' });
         }
-    })
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 router.get('/profile', (req, res) => {
@@ -81,14 +71,18 @@ router.get('/profile', (req, res) => {
     }
 });
 
-router.get('/delete-account', (req, res) => {
-    if (req.session.user) {
-        const user = req.session.user;
-        dbManager.deleteUser(user.mail);
-        req.session.destroy();
-        res.json({ message: 'Account deleted successfully' });
-    } else {
-        res.status(401).json({ message: 'User not logged in' });
+router.delete('/delete-account', async (req, res) => { // Змінено на DELETE для правильної REST архітектури
+    try {
+        if (req.session.user) {
+            const user = req.session.user;
+            await dbManager.deleteUser(user.userMail);
+            req.session.destroy();
+            res.json({ message: 'Account deleted successfully' });
+        } else {
+            res.status(401).json({ message: 'User not logged in' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
