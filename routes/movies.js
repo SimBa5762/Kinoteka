@@ -1,94 +1,76 @@
-const fs = require('fs');
-const path = require('path');
 const express = require('express');
 const router = express.Router();
 const dbManager = require('../public/dbManager');
 
-    let movies = [];
-
-    router.get('/movies', (req, res) => {
-        const genre = req.query.genre;
-        if(!genre) genre = '';
-        movies = dbManager.getMovies(genre);
+router.get('/movies', async (req, res) => {
+    try {
+        const genre = req.query.genre || '';
+        // Чекаємо на виконання промісу
+        const movies = await dbManager.getMovies(genre);
         res.json(movies);
-    });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-    router.get('/movies/:id', (req, res) => {
+router.get('/movies/:id', async (req, res) => {
+    try {
         const movieId = parseInt(req.params.id);
-        const movie = movies.find(m => m.id === movieId);
-        if (movie) {
-            res.json(movie);
-        } else {
-            res.status(404).json({ error: 'Movie not found' });
-        }
-    });
+        const movie = await dbManager.getMovieById(movieId);
+        if (movie) res.json(movie);
+        else res.status(404).json({ error: 'Movie not found' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-    router.post('/movie', (req, res) => {
-        let body = '';
+router.post('/movies', async (req, res) => {
+    try {
+        // Замість ручного парсингу використовуємо req.body (потрібен app.use(express.json()) у server.js)
+        await dbManager.addMovie(req.body);
+        res.status(201).json({ message: 'Movie added successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-
-        req.on('end', () => {
-            const newMovie = JSON.parse(body);
-            
-            const result = dbManager.addMovie(newMovie);
-            if(result)
-                res.status(201).json({ message: 'Movie added successfully'});
-            else 
-                res.status(500).json({ message: 'Error adding movie'});
-        });
-    });
-
-    router.put('/movies/:id', (req, res) => {
+router.put('/movies/:id', async (req, res) => {
+    try {
         const movieId = parseInt(req.params.id);
-        let body = '';
+        await dbManager.updateMovie(movieId, req.body); // Виправлено одруківку 'updatedMovie'
+        res.status(200).json({ message: 'Movie updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-        
-        req.on('end', () => {
-            const updatedMovie = JSON.parse(body);
-            
-            const result = dbManager.updatedMovie(movieId, updatedMovie);
-            if(result)
-                res.status(200).json({ message: 'Movie updated successfully'});
-            else 
-                res.status(500).json({ message: 'Error updating movie'});
-        });
-    });
-
-    router.delete('/movies/:id', (req, res) => {
+router.delete('/movies/:id', async (req, res) => {
+    try {
         const movieId = parseInt(req.params.id);
-        
-        const result = dbManager.deleteMovie(movieId);
-        if(result)
-            res.status(200).json({ message: 'Movie updated successfully'});
-        else 
-            res.status(500).json({ message: 'Error updating movie'});
-    });
+        await dbManager.deleteMovie(movieId);
+        res.status(200).json({ message: 'Movie deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-    router.post('/movies/:id/reviews', (req, res) => {
+router.post('/movies/:id/reviews', async (req, res) => {
+    try {
         const movieId = parseInt(req.params.id);
-        let body = '';
-        req.on('data', chunk => {
-            body += chunk.toString();
-        });
-        req.on('end', () => {
-            const newReview = JSON.parse(body);
-            
-            const result = dbManager.addReview(movieId, newReview);
-            if(!result)
-                res.status(500).json({ message: 'Error adding review'});
-            res.status(201).json({ message: 'Review added successfully' });
-        });
-    });
+        await dbManager.addReview(movieId, req.body);
+        res.status(201).json({ message: 'Review added successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
-    router.get('/genres', (req, res) => {
-        
-    });
+router.get('/genres', async (req, res) => {
+    try {
+        const genres = await dbManager.getGenres();
+        res.json(genres);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 module.exports = router;
-
