@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const express = require('express');
-const movieRouter = require('./routes/movies.js');
-const userRouter = require('./routes/users.js');
+const moviesRouter = require('./routes/movies');
+const usersRouter = require('./routes/users');
 
 
 
@@ -17,8 +17,8 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.use('/movies', movieRouter);
-app.use('/users', userRouter);
+app.use('/api/movies', movieRouter);
+app.use('/api/users', userRouter);
 
 
 
