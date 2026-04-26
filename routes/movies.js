@@ -6,10 +6,6 @@ const dbManager = require('../public/dbManager');
 
     let movies = [];
 
-    router.get('/', (req, res) => { 
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
-
     router.get('/movies', (req, res) => {
         const genre = req.query.genre;
         if(!genre) genre = '';
@@ -94,5 +90,5 @@ const dbManager = require('../public/dbManager');
         
     });
 
-
+module.exports = router;
 

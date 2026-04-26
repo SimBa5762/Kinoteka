@@ -81,7 +81,7 @@ router.get('/profile', (req, res) => {
     }
 });
 
-route.get('/delete-account', (req, res) => {
+router.get('/delete-account', (req, res) => {
     if (req.session.user) {
         const user = req.session.user;
         dbManager.deleteUser(user.mail);
@@ -91,3 +91,5 @@ route.get('/delete-account', (req, res) => {
         res.status(401).json({ message: 'User not logged in' });
     }
 });
+
+module.exports = router;

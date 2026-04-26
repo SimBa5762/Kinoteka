@@ -1,175 +1,163 @@
 const path = require('path');
+const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
 
-const db = new sqlite3.Database(path.join(__dirname, 'db/database.sqlite'), (err) => {
-    if (err) {
-        console.error('Помилка підключення до БД:', err.message);
-    } else {
-        console.log('Підключено до SQLite.');
-        dbManager.init(); 
-    }
-});
-    const schema = fs.readFileSync(path.join(__dirname, 'db/schema.sql'), 'utf-8');
-    const data = fs.readFileSync(path.join(__dirname, 'db/data.sql'), 'utf-8');
-    let moviesCache = {};
-class dbManager {
+class DbManager {
     constructor(db) {
         this.db = db;
     }
 
-    init()
-    {
-        db.exec(schema, (err) => {
+    seedDatabase(data) {
+        this.db.exec(data, (err) => {
+            if (err) console.error('Помилка заповнення бази даних:', err.message);
+            else console.log('✅ База успішно заповнена початковими даними.');
+        });
+    }
+
+    init(schema, data) {
+        this.db.exec(schema, (err) => {
             if (err) {
                 console.error('Помилка створення таблиць:', err.message);
                 return;
             }
             console.log('Таблиці створено.');
         
-            // 2. Перевіряємо, чи база вже заповнена (наприклад, перевіряємо таблицю genres)
-            db.get('SELECT COUNT(*) as count FROM genres', (err, row) => {
-                if (err) {
-                    console.error('Помилка перевірки даних:', err.message);
-                    return;
-                }
-        
+            this.db.get('SELECT COUNT(*) as count FROM genres', (err, row) => {
+                if (err) return console.error('Помилка перевірки даних:', err.message);
                 if (row.count === 0) {
-                    console.log('База порожня');
-                    seedDatabase();
+                    console.log('База порожня, ініціалізую...');
+                    this.seedDatabase(data);
                 }
             });
         });
     }
 
-    seedDatabase() {
-        db.exec(data, (err) => {
-            if (err) {
-                console.error('Помилка заповнення бази даних:', err.message);
-            } else {
-                console.log('✅ База успішно заповнена початковими даними.');
-            }
-        });
-    }
-
-    getMovies(genre = '') {
+    getMovies(genreId = '') {
         return new Promise((resolve, reject) => {
-            let result;
-            let query = 'SELECT id, title, poster_url FROM movies';
+            let query = 'SELECT id, title, poster_url, rating FROM movies';
+            let params = []; // Виправлено: додано ініціалізацію масиву
 
-            if (genre == '') {
-                query += ' WHERE genre = ?';
-                params.push(genre);
+            if (genreId !== '') {
+                query += ' WHERE genre_id = ?'; // Виправлено: у схемі genre_id
+                params.push(genreId);
             }
 
-            moviesCache = db.all(query, params, (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
+            this.db.all(query, params, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
             });
         });
     }
-    
+
     getMovieById(id) {
         return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM movies WHERE id = ?', [id], (err, row) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(row);
-                }   
+            this.db.get('SELECT * FROM movies WHERE id = ?', [id], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
             });
         });
     }
+
     addMovie(movie) {
         return new Promise((resolve, reject) => {
-            const { title, director, genre, year, description } = movie;
-            db.run('INSERT INTO movies (title, director, genre, year, description) VALUES (?, ?, ?, ?, ?)', [title, director, genre, year, description], 
+            const { title, poster_url, year, genre_id, description } = movie;
+            this.db.run('INSERT INTO movies (title, poster_url, "year", genre_id, "description") VALUES (?, ?, ?, ?, ?)', 
+                [title, poster_url, year, genre_id, description], 
                 function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ id: this.lastID, ...movie });
+                    if (err) reject(err);
+                    else resolve({ id: this.lastID, ...movie });
                 }
-            });
+            );
         });
     }
     
     updateMovie(id, movie) {
         return new Promise((resolve, reject) => {
-            const { title, director, genre, year, description } = movie;
-
-            db.run('UPDATE movies SET title = ?, director = ?, genre = ?, year = ?, description = ? WHERE id = ?', 
-                [title, director, genre, year, description, id], 
+            const { title, poster_url, year, genre_id, description } = movie;
+            this.db.run('UPDATE movies SET title = ?, poster_url = ?, "year" = ?, genre_id = ?, "description" = ? WHERE id = ?', 
+                [title, poster_url, year, genre_id, description, id], 
                 function(err) {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve({ id, ...movie });
-                    }
-                });
+                    if (err) reject(err);
+                    else resolve({ id, ...movie });
+                }
+            );
         });
     }
 
     deleteMovie(id) {
         return new Promise((resolve, reject) => {
-            db.run('DELETE FROM movies WHERE id = ?', [id], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ message: 'Movie deleted successfully' });
-                }
+            this.db.run('DELETE FROM movies WHERE id = ?', [id], function(err) {
+                if (err) reject(err);
+                else resolve(true);
             });
         });
     }
 
-    getUser(mail)
-    {
+    // Додано метод для відгуків
+    addReview(movieId, review) {
         return new Promise((resolve, reject) => {
-            db.get('SELECT * FROM users WHERE mail = ?', [mail], (err, row) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(row);
-                }   
+            const { user_id, author, text, rating } = review;
+            this.db.run('INSERT INTO reviews (user_id, movie_id, author, "text", rating) VALUES (?, ?, ?, ?, ?)',
+                [user_id, movieId, author, text, rating],
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(true);
+                }
+            );
+        });
+    }
+
+    getGenres() {
+        return new Promise((resolve, reject) => {
+            this.db.all('SELECT * FROM genres', [], (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
             });
         });
     }
 
-    addUser(data)
-    {
+    getUser(mail) {
+        return new Promise((resolve, reject) => {
+            // Виправлено: у схемі поле називається userMail
+            this.db.get('SELECT * FROM users WHERE userMail = ?', [mail], (err, row) => {
+                if (err) reject(err);
+                else resolve(row);
+            });
+        });
+    }
+
+    addUser(data) {
         return new Promise((resolve, reject) => {
             const { name, mail, password } = data;
-            db.run('INSERT INTO users (name, mail, password) VALUES (?, ?, ?)', [name, mail, password], 
+            // Виправлено: у схемі поля userName та userMail
+            this.db.run('INSERT INTO users (userName, userMail, password) VALUES (?, ?, ?)', [name, mail, password], 
                 function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(true);
+                    if (err) reject(err);
+                    else resolve(true);
                 }
-            });
+            );
         });
     }
-    deleteUser(email)
-    {
+
+    deleteUser(email) {
         return new Promise((resolve, reject) => {
-            const { mail } = data;
-            db.run('DELETE FROM users WHERE mail = ?', [mail], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(true);
-                }
+            this.db.run('DELETE FROM users WHERE userMail = ?', [email], function(err) {
+                if (err) reject(err);
+                else resolve(true);
             });
         });
     }
 }
-
-
-
-
-
-
-
-
+    
+const db = new sqlite3.Database(path.join(__dirname, '../db/database.sqlite'), (err) => {
+    if (err) {
+        console.error('Помилка підключення до БД:', err.message);
+    } else {
+        console.log('Підключено до SQLite.');
+        const manager = new DbManager(db);
+        const schema = fs.readFileSync(path.join(__dirname, '../db/schema.sql'), 'utf-8');
+        const data = fs.readFileSync(path.join(__dirname, '../db/data.sql'), 'utf-8');
+        manager.init(schema, data);
+        module.exports = manager;
+    }
+});
