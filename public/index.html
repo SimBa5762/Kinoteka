@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Кінотека</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>🎬 Кінотека</h1>
+        <label>
+            <input type="checkbox" id="adminToggle"> Режим Адміністратора
+        </label>
+    </header>
+
+    <main>
+        <section class="controls">
+            <input type="text" id="searchInput" placeholder="Пошук фільмів...">
+            <select id="genreFilter"><option value="">Всі жанри</option></select>
+            <select id="sortSelect">
+                <option value="">Сортування</option>
+                <option value="rating">За рейтингом</option>
+                <option value="year">За роком</option>
+            </select>
+        </section>
+
+        <section id="moviesGrid" class="grid"></section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
