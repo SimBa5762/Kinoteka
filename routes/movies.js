@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const dbManager = require('../public/dbManager');
-const isAuthenticated = require('../middleware/isAuthenticated');
-const isAdmin = require('../middleware/isAdmin');
+const { isAuthenticated, isAdmin} = require('./middleware');
 
 router.get('/', async (req, res) => {
     try {

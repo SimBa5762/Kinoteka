@@ -17,11 +17,9 @@
                 <option value="rating">За рейтингом</option>
                 <option value="year">За роком</option>
             </select>
-            <button class="find" onClick="findTheFilms(searchInput.value, genreFilter.value, sortSelect.value)">Find</button>
+            <button class="find" id="find" onClick="findTheFilms(searchInput.value, genreFilter.value, sortSelect.value)">Find</button>
         </div>
-        <div class="auth-btns">
-            <button class="login" onclick="openPopupPanel('login')">Вхід</button>/
-            <button class="registration" onclick="openPopupPanel('registration')">Реєстрація</button>
+        <div class="user-controls" id="user-controls">
         </div>
     </header>
 

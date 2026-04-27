@@ -1,11 +1,24 @@
+let currentUser = null;
+let isAdmin = false;
+
+//завантажити постери для фільмів
+//зробити меню додавання фільму
+//видалення фільму
+//при відкритті сторінки фільму, вивести інформацію про нього і щоб було можливо редагувати
+//на тсорінці фільму можливість залишати коментарі
+//редагувати свій коментар
+//виділяти свій коментар
+//на головній якщо увійшов в акаунт переглядати свою інформацію(вспливаюче віконце)
+//виходити з акаунта, і видаляти свій акаунт
+//більш приваблививй інтерфейс
 
 document.addEventListener('DOMContentLoaded', () => {
     const moviesGrid = document.getElementById('moviesGrid');
-    const isAdmin = fetch()
     const searchInput = document.getElementById('searchInput');
     const genreFilter = document.getElementById('genreFilter');
     const sortSelect = document.getElementById('sortSelect');
 
+    const userControls = document.getElementById('user-controls');
 
     // 1. Завантаження жанрів
     fetch('/api/genres')
@@ -15,7 +28,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 genreFilter.innerHTML += `<option value="${g.id}">${g.name}</option>`;
             });
         });
+    
+    fetch('/api/users/profile')
+    .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Not logged in');
+    })
+    .then(user => {
+        currentUser = user;
+        // Перевіряємо роль (якщо ти зберіг її в сесії як 'admin' або 'owner')
+        isAdmin = (user.role === 'admin' || user.role === 'owner');
+        
+        // Оновлюємо інтерфейс: ховаємо кнопки входу, показуємо кнопку профілю
+        userControls.innerHTML = `
+            <button class="btn-profile" onclick="popupProfilePanel()">👤 ${user.userName}</button>
+        `;
+        
+        // Перезавантажуємо фільми, щоб з'явилася кнопка "+" для адміна
+        loadMovies();
+    })
+    .catch(err => {
+        console.log("Користувач не авторизований");
+        userControls.innerHTML = `
+            <button class="login" onclick="
+                closePopupPanel();
+                openPopupPanel('login')">Вхід</button>/
+            <button class="registration" onclick="
+                closePopupPanel(); 
+                openPopupPanel('register')">Реєстрація</button>
+        `;
 
+        loadMovies(); // Все одно вантажимо фільми як гість
+    });
     // 2. Головна функція завантаження фільмів
     function loadMovies() {
         // Формуємо URL з параметрами пошуку
@@ -84,12 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
     searchInput.addEventListener('input', loadMovies);
     genreFilter.addEventListener('change', loadMovies);
     sortSelect.addEventListener('change', loadMovies);
-    
-    // Перемикач адміна
-    adminToggle.addEventListener('change', (e) => {
-        isAdmin = e.target.checked;
-        loadMovies();
-    });
 
     // Перше завантаження
     loadMovies();
@@ -98,9 +136,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function openPopupPanel(type)
 {
+    
+
     const body = document.getElementById('body');
     const popup = document.createElement('div');
         popup.className = 'popup';
+        popup.id = 'popup';
     const inputs = document.createElement('div');
         inputs.className = 'popup-inputs';
     const email = document.createElement('div');
@@ -115,6 +156,7 @@ function openPopupPanel(type)
         btn.className = 'popup-btn';
     const btn2 = document.createElement('button');
         btn2.className = 'popup-extra-btn';
+    
     
     if(type == 'login')
     {
@@ -151,7 +193,7 @@ function openPopupPanel(type)
 
             fetch('/api/users/login', 
                 {
-                    Method: 'POST',
+                    method: 'post',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -218,7 +260,7 @@ function openPopupPanel(type)
         btn.onclick = () => {
             fetch('/api/users/register', 
                 {
-                    Method: 'POST',
+                    method: 'post',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -232,12 +274,11 @@ function openPopupPanel(type)
                 .then(data => {
                     if(data)
                     {
-                        closePopupPanel();
-
                         if(data.message == 'Registration successful')
                             {
                                 alert('Registration successful! Please login');
-                                popupPanel('login');
+                                closePopupPanel();
+                                openPopupPanel('login');
                             } 
                         else if(data.message == 'User already exists') alert('User already exists! Please login');
                     }else {
@@ -254,5 +295,12 @@ function openPopupPanel(type)
         btnsContainer.appendChild(btn);
         popup.appendChild(btnsContainer);
         body.appendChild(popup);
+    }
+}
+
+function closePopupPanel() {
+    const popup = document.getElementById('popup');
+    if (popup) {
+        popup.remove(); // Видаляє елемент, якщо він існує
     }
 }

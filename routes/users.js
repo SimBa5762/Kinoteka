@@ -3,9 +3,9 @@ const router = express.Router();
 const dbManager = require('../public/dbManager');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
-const { isOwner } = require('../middleware/isOwner');
+const { isAuthenticated, isAdmin, isOwner } = require('./middleware');
 router.use(
-    module.exports = session({
+    session({
         secret: 'super-secret-key',
         saveUninitialized: false,
         cookie: { httpOnly: true },
@@ -16,9 +16,7 @@ router.use(
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        let type = 'user';
-        if(email.contains('kinoteka')) type = 'admin';
-        const user = await dbManager.getUser(email, type);
+        const user = await dbManager.getUser(email);
         
         if (user) {
             const match = await bcrypt.compare(password, user.password);
@@ -96,4 +94,4 @@ router.post('/add-admin', isAuthenticated, isOwner, async (req, res) => {
     res.status(201).json({ message: 'Адміністратора успішно створено' });
 });
 
-module.exports = router, isAuthenticated, isAdmin, isOwner;
+module.exports = router;

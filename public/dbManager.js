@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const sqlite3 = require('sqlite3').verbose();
 
+//додати функцію додавання постеру
 class DbManager {
     constructor(db) {
         this.db = db;
@@ -115,18 +116,8 @@ class DbManager {
         });
     }
 
-    getUser(mail, type = 'user') {
-        if (type === 'admin') {
-            return new Promise((resolve, reject) => {
-                this.db.get('SELECT * FROM admins WHERE adminMail = ?', [mail], (err, row) => {
-                    if (err) reject(err);
-                    else resolve(row);
-                });
-            });
-        }
-
-        return new Promise((resolve, reject) => {
-            // Виправлено: у схемі поле називається userMail
+    getUser(mail) {
+       return new Promise((resolve, reject) => {
             this.db.get('SELECT * FROM users WHERE userMail = ?', [mail], (err, row) => {
                 if (err) reject(err);
                 else resolve(row);
@@ -177,10 +168,21 @@ const db = new sqlite3.Database(path.join(__dirname, '../db/database.sqlite'), (
         console.error('Помилка підключення до БД:', err.message);
     } else {
         console.log('Підключено до SQLite.');
-        const manager = new DbManager(db);
-        const schema = fs.readFileSync(path.join(__dirname, '../db/schema.sql'), 'utf-8');
-        const data = fs.readFileSync(path.join(__dirname, '../db/data.sql'), 'utf-8');
-        manager.init(schema, data);
-        module.exports = manager;
     }
 });
+
+// Створюємо менеджер ОДРАЗУ, щоб він був доступний для експорту
+const manager = new DbManager(db);
+
+// Ініціалізацію можна викликати окремо
+const schemaPath = path.join(__dirname, '../db/schema.sql');
+const dataPath = path.join(__dirname, '../db/data.sql');
+
+if (fs.existsSync(schemaPath) && fs.existsSync(dataPath)) {
+    const schema = fs.readFileSync(schemaPath, 'utf-8');
+    const data = fs.readFileSync(dataPath, 'utf-8');
+    manager.init(schema, data);
+}
+
+// ЕКСПОРТ МАЄ БУТИ ТУТ (не в колбеку!)
+module.exports = manager;
