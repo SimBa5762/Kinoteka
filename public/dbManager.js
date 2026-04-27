@@ -33,22 +33,21 @@ class DbManager {
     }
 
     getMovies(genreId = '') {
-        return new Promise((resolve, reject) => {
-            let query = 'SELECT id, title, poster_url, rating FROM movies';
-            let params = []; // Виправлено: додано ініціалізацію масиву
+    return new Promise((resolve, reject) => {
+        let query = 'SELECT id, title, poster_url, rating, "year" FROM movies';
+        let params = []; // <--- ПЕРЕВІР, ЩОБ ЦЕЙ РЯДОК БУВ!
 
-            if (genreId !== '') {
-                query += ' WHERE genre_id = ?'; // Виправлено: у схемі genre_id
-                params.push(genreId);
-            }
+        if (genreId !== '') {
+            query += ' WHERE genre_id = ?';
+            params.push(genreId);
+        }
 
-            this.db.all(query, params, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
+        this.db.all(query, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []); // Завжди повертаємо масив
         });
-    }
-
+    });
+}
     getMovieById(id) {
         return new Promise((resolve, reject) => {
             this.db.get('SELECT * FROM movies WHERE id = ?', [id], (err, row) => {
