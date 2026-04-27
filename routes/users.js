@@ -3,9 +3,9 @@ const router = express.Router();
 const dbManager = require('../public/dbManager');
 const bcrypt = require('bcrypt');
 const session = require('express-session');
-
+const { isOwner } = require('../middleware/isOwner');
 router.use(
-    session({
+    module.exports = session({
         secret: 'super-secret-key',
         saveUninitialized: false,
         cookie: { httpOnly: true },
@@ -13,16 +13,17 @@ router.use(
     })
 );
 
-// Виправлено: GET -> POST. Паролі не можна передавати в URL!
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await dbManager.getUser(email);
+        let type = 'user';
+        if(email.contains('kinoteka')) type = 'admin';
+        const user = await dbManager.getUser(email, type);
         
         if (user) {
             const match = await bcrypt.compare(password, user.password);
             if (match) {
-                req.session.user = { id: user.id, userName: user.userName, userMail: user.userMail };
+                req.session.user = { id: user.id, userName: user.userName, userMail: user.userMail, role: user.role };
                 res.json({ message: 'Login successful' });
             } else {
                 res.status(401).json({ message: 'Wrong password' });
@@ -86,4 +87,13 @@ router.delete('/delete-account', async (req, res) => { // Змінено на DE
     }
 });
 
-module.exports = router;
+router.post('/add-admin', isAuthenticated, isOwner, async (req, res) => {
+    const { name, email, password } = req.body;
+    const hash = await bcrypt.hash(password, 10);
+    
+    // Передаємо явно роль 'admin'
+    await dbManager.addUser({ name, mail: email, password: hash, role: 'admin' });
+    res.status(201).json({ message: 'Адміністратора успішно створено' });
+});
+
+module.exports = router, isAuthenticated, isAdmin, isOwner;

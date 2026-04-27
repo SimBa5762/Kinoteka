@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const dbManager = require('../public/dbManager');
+const isAuthenticated = require('../middleware/isAuthenticated');
+const isAdmin = require('../middleware/isAdmin');
 
 router.get('/', async (req, res) => {
     try {
@@ -24,7 +26,7 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', isAuthenticated, isAdmin, async (req, res) => {
     try {
         // Замість ручного парсингу використовуємо req.body (потрібен app.use(express.json()) у server.js)
         await dbManager.addMovie(req.body);
@@ -34,7 +36,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const movieId = parseInt(req.params.id);
         await dbManager.updateMovie(movieId, req.body); // Виправлено одруківку 'updatedMovie'
@@ -44,7 +46,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const movieId = parseInt(req.params.id);
         await dbManager.deleteMovie(movieId);
@@ -53,6 +55,7 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 
 router.post('/:id/reviews', async (req, res) => {
     try {

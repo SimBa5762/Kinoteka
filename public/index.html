@@ -5,30 +5,69 @@
     <title>Кінотека</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body id="body">
     <header>
-        <h1>Кінотека</h1>
+        <h1 class="logo">Кінотека</h1>
 
-        <label>
-            <input type="checkbox" id="adminToggle"> Режим Адміністратора
-        </label>
-    </header>
-
-    <main>
-        
-
-        <section class="controls">
-            <input type="text" id="searchInput" placeholder="Пошук фільмів...">
-            <select id="genreFilter"><option value="">Всі жанри</option></select>
-            <select id="sortSelect">
+        <div class="controls">
+            <input type="text" id="searchInput" class="searchInput" placeholder="Пошук фільмів...">
+            <select id="genreFilter" class="genreFilter"><option value="">Всі жанри</option></select>
+            <select id="sortSelect" class="sortSelect">
                 <option value="">Сортування</option>
                 <option value="rating">За рейтингом</option>
                 <option value="year">За роком</option>
             </select>
-        </section>
+            <button class="find" onClick="findTheFilms(searchInput.value, genreFilter.value, sortSelect.value)">Find</button>
+        </div>
+        <div class="auth-btns">
+            <button class="login" onclick="openPopupPanel('login')">Вхід</button>/
+            <button class="registration" onclick="openPopupPanel('registration')">Реєстрація</button>
+        </div>
+    </header>
 
-        <section id="moviesGrid" class="grid"></section>
+    <main>
+        <section id="moviesGrid" class="grid">
+            <div class="movie-card">
+                <img src="" class="poster"/>
+                <div class="content">
+                    <h3 class="title"></h3>
+                    <p class="year"></p>
+                    <p class="rating"></p>
+                </div>
+            </div>
+        </section>
     </main>
+    <div id="overlay" class="overlay" onclick="toggleProfilePanel()"></div>
+
+    <aside id="profilePanel" class="profile-panel">
+        <div class="panel-header">
+            <h2>Мій Профіль</h2>
+            <button class="close-btn" onclick="toggleProfilePanel()">&times;</button>
+        </div>
+        
+        <div class="panel-body">
+            <form id="updateProfileForm">
+                <div class="input-group">
+                    <label>Ім'я</label>
+                    <input type="text" id="profileName" value="Богдан">
+                </div>
+                <div class="input-group">
+                    <label>Пошта</label>
+                    <input type="email" id="profileEmail" value="user@mail.com" disabled>
+                </div>
+                <div class="input-group">
+                    <label>Новий пароль</label>
+                    <input type="password" id="profilePassword" placeholder="Залишіть пустим, якщо не змінюєте">
+                </div>
+                <button type="submit" class="btn-primary btn-full">Зберегти зміни</button>
+            </form>
+        </div>
+
+        <div class="panel-footer">
+            <button class="btn-outline btn-full" onclick="logout()">🚪 Вийти з акаунту</button>
+            <button class="btn-danger btn-full" onclick="deleteAccount()">🗑 Видалити акаунт</button>
+        </div>
+    </aside>
 
     <script src="app.js"></script>
 </body>

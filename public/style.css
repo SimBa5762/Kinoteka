@@ -1,0 +1,270 @@
+/* 
+ */
+
+ /* --- БАЗОВІ НАЛАШТУВАННЯ --- */
+:root {
+    --bg-color: #f5f7fa;
+    --header-bg: #333;
+    --text-main: #333;
+    --text-light: #fff;
+    --accent-color: #fff; /* Акцентний червоний (як у Netflix) */
+    --accent-hover: #b8070f;
+    --card-bg: #fff;
+    --gray-border: #e2e8f0;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header{
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    width:100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo{
+    margin-left: 10px;
+}
+
+.loginOrRegistration button{
+    background-color: transparent;
+    color : #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+.controls{
+    width:100%;
+    display:flex;
+    justify-content: center;
+}
+
+.searchInput{
+    background-color: #3e3e3e;
+    color:#e0e0e0;
+    width: 300px;
+    padding: 4px;
+    margin: 10px;
+    /* border: 1px solid #e0e0e0; */
+    border-radius: 5px;
+    font-size: 16px;
+}
+.genreFilter{
+    background-color: #3e3e3e;
+    color:#e0e0e0;
+    padding: 4px;
+    width: 100px;
+    margin: 10px;
+    /* border: 1px solid #e0e0e0; */
+    border-radius: 5px;
+    font-size: 16px;
+}
+.sortSelect{
+    background-color: #3e3e3e;
+    color:#e0e0e0;
+    padding: 4px;
+    margin: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.search-input { width: 400px; }
+.search-input:focus, .filter-select:focus { border-color: var(--accent-color); }
+
+/* --- КНОПКИ --- */
+.auth-buttons { display: flex; gap: 10px; }
+
+button {
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 4px 20px;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.btn-primary {
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+}
+.btn-primary:hover { background-color: var(--accent-hover); }
+
+.btn-outline {
+    background-color: transparent;
+    color: var(--text-light);
+    border: 1px solid var(--text-light);
+}
+.btn-outline:hover { background-color: rgba(255,255,255,0.1); }
+
+.btn-danger {
+    background-color: transparent;
+    color: #ff4d4d;
+    border: 1px solid #ff4d4d;
+}
+.btn-danger:hover { background-color: #ff4d4d; color: #fff; }
+
+.btn-full { width: 100%; margin-bottom: 10px; }
+
+/* --- СІТКА ФІЛЬМІВ --- */
+main {
+    padding: 40px;
+    flex-grow: 1;
+}
+
+.grid {
+    display: grid;
+    /* Адаптивна сітка: мінімум 220px для картки, розтягується рівномірно */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 25px;
+}
+
+/* --- КАРТКА ФІЛЬМУ --- */
+.movie-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.movie-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 20px rgba(0,0,0,0.15);
+}
+
+.movie-card .poster {
+    width: 100%;
+    height: 330px;
+    object-fit: cover;
+    border-bottom: 1px solid var(--gray-border);
+}
+
+.movie-card .content {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.movie-card .title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text-main);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Додає '...' якщо назва довга */
+}
+
+.movie-card .year {
+    margin: 0;
+    font-size: 14px;
+    color: #718096;
+}
+
+.movie-card .rating {
+    margin-top: 5px;
+    font-weight: bold;
+    color: #f6ad55; /* Золотий колір для зірки */
+}
+
+/* --- БОКОВА ПАНЕЛЬ ПРОФІЛЮ --- */
+.overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(3px); /* Ефект розмиття фону */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+    z-index: 999;
+}
+
+.profile-panel {
+    position: fixed;
+    top: 0; 
+    right: -400px; /* Схована за екраном */
+    width: 350px;
+    height: 100vh;
+    background: var(--card-bg);
+    box-shadow: -5px 0 25px rgba(0,0,0,0.2);
+    transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Клас, який додається через JS для відкриття */
+.profile-panel.open { right: 0; }
+.overlay.open { opacity: 1; visibility: visible; }
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--gray-border);
+}
+
+.panel-header h2 { margin: 0; color: var(--text-main); }
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 30px;
+    color: #a0aec0;
+    padding: 0;
+    cursor: pointer;
+}
+.close-btn:hover { color: var(--accent-color); }
+
+.panel-body {
+    padding: 20px;
+    flex-grow: 1; /* Займає весь доступний простір */
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #718096;
+    margin-bottom: 5px;
+}
+
+.input-group input {
+    padding: 12px;
+    border: 1px solid var(--gray-border);
+    border-radius: 6px;
+    font-size: 15px;
+    background-color: #f7fafc;
+}
+.input-group input:disabled { color: #a0aec0; cursor: not-allowed; }
+
+.panel-footer {
+    padding: 20px;
+    border-top: 1px solid var(--gray-border);
+}

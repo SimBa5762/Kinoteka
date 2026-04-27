@@ -115,7 +115,16 @@ class DbManager {
         });
     }
 
-    getUser(mail) {
+    getUser(mail, type = 'user') {
+        if (type === 'admin') {
+            return new Promise((resolve, reject) => {
+                this.db.get('SELECT * FROM admins WHERE adminMail = ?', [mail], (err, row) => {
+                    if (err) reject(err);
+                    else resolve(row);
+                });
+            });
+        }
+
         return new Promise((resolve, reject) => {
             // Виправлено: у схемі поле називається userMail
             this.db.get('SELECT * FROM users WHERE userMail = ?', [mail], (err, row) => {
@@ -130,6 +139,21 @@ class DbManager {
             const { name, mail, password } = data;
             // Виправлено: у схемі поля userName та userMail
             this.db.run('INSERT INTO users (userName, userMail, password) VALUES (?, ?, ?)', [name, mail, password], 
+                function(err) {
+                    if (err) reject(err);
+                    else resolve(true);
+                }
+            );
+        });
+    }
+
+    addAdmin(data)
+    {
+        const bcrypt = require('bcrypt');
+
+        return new Promise((resolve, reject) => {
+            const { name, mail, password } = data;
+            this.db.run('INSERT INTO admins (adminName, adminMail, password) VALUES (?, ?, ?)', [name, mail,  bcrypt.hashSync(password, 10)], 
                 function(err) {
                     if (err) reject(err);
                     else resolve(true);
