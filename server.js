@@ -4,7 +4,7 @@ const express = require('express');
 const moviesRouter = require('./routes/movies');
 const usersRouter = require('./routes/users');
 const genresRouter = require('./routes/genres');
-
+const sessionConfig = require('./config/session');
 
 const app = express();
 const PORT = 3000;
@@ -12,6 +12,8 @@ const PORT = 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json()); 
+
+app.use(sessionConfig);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

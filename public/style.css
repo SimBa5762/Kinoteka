@@ -1,13 +1,10 @@
-/* 
- */
 
- /* --- БАЗОВІ НАЛАШТУВАННЯ --- */
 :root {
     --bg-color: #f5f7fa;
     --header-bg: #333;
     --text-main: #333;
     --text-light: #fff;
-    --accent-color: #fff; /* Акцентний червоний (як у Netflix) */
+    --accent-color: #fff; 
     --accent-hover: #b8070f;
     --card-bg: #fff;
     --gray-border: #e2e8f0;
@@ -34,6 +31,7 @@ header{
     justify-content: space-between;
     align-items: center;
 }
+
 .logo{
     margin-left: 10px;
 }
@@ -121,6 +119,10 @@ button {
 
 .btn-full { width: 100%; margin-bottom: 10px; }
 
+.find{
+    height:35px;
+    align-self: center;
+}
 /* --- СІТКА ФІЛЬМІВ --- */
 main {
     padding: 40px;
@@ -267,4 +269,100 @@ main {
 .panel-footer {
     padding: 20px;
     border-top: 1px solid var(--gray-border);
+}
+
+
+/* --- вспливаюче вікно авторизації/реєстрації --- */ 
+.popup{
+    position:absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    text-align: center;
+    z-index: 1;
+
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    /* align-items: center; */
+
+}
+
+.popup-title{
+    color: #333;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: top;
+    padding-left:35%;
+}
+.popup-close{
+    cursor:pointer;
+}
+
+/* .popup-title div{
+    display:flex;
+    justify-content: space-around;
+    align-items: center;
+    margin:0;
+    padding:0;
+    flex-direction: column;
+} */
+
+.popup-inputs{
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.popup-email, .popup-password, .popup-name{
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #333;
+}
+
+
+
+.popup-button{
+    /* padding: 10px 20px; */
+    margin:10px;
+    background-color: #007BFF;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.popup-btns-container{
+    width:100%;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+/* сторінка  книги */
+
+body{
+    display:flex;
+    flex-direction: column;
+    justify-content: center;
+} 
+
+header{
+    display:flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
 }

@@ -1,3 +1,5 @@
+
+
 let currentUser = null;
 let isAdmin = false;
 
@@ -27,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             genres.forEach(g => {
                 genreFilter.innerHTML += `<option value="${g.id}">${g.name}</option>`;
             });
+            console.log("Жанри завантажені:", genres);
         });
     
     fetch('/api/users/profile')
@@ -36,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .then(user => {
         currentUser = user;
+        
         // Перевіряємо роль (якщо ти зберіг її в сесії як 'admin' або 'owner')
         isAdmin = (user.role === 'admin' || user.role === 'owner');
         
@@ -46,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Перезавантажуємо фільми, щоб з'явилася кнопка "+" для адміна
         loadMovies();
+        console.log("Користувач авторизований:", user);
+
     })
     .catch(err => {
         console.log("Користувач не авторизований");
@@ -71,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(url)
             .then(res => res.json())
             .then(movies => renderMovies(movies));
+        console.log("Завантаження фільмів з параметрами:", url.searchParams.toString());
     }
 
     // 3. Відображення карток
@@ -89,7 +96,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const addCard = document.createElement('div');
             addCard.className = 'movie-card admin-add-card';
             addCard.innerHTML = `<span>+</span>`;
-            addCard.onclick = () => alert('Тут буде форма додавання (POST /api/movies)');
+            addCard.onclick = () => {
+                window.location.href = '/movie.html';
+                renderAddingMoviePage();
+            };
             moviesGrid.appendChild(addCard);
         }
 
@@ -133,6 +143,79 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMovies();
 });
 
+function renderMoviePage(props) {
+    const header = getElementById('header');
+    const main = getElementById('main');
+    const footer = getElementById('footer');
+
+    const backToMain = createElement('button', 'back-to-main', 'На головну', () => {
+        window.location.href = '/';
+    });
+    const title = createElement('h1', 'title');
+
+    const profile = createElement('button', 'profile', 'Профіль', () => {
+        popupProfilePanel();
+    });
+
+    if(Admin)
+    {
+        title.textContent = 'Додавання фільму';
+        header.appendChild(backToMain, title, profile);
+
+
+        const form = createElement('form');
+        const inputs = createElement('div', 'inputs');
+        const inputName = createElement('input', 'input-name');
+        const inputYear = createElement('input', 'input-year');
+        const selectgenre= createElement('select', 'select-genre');
+
+        const uploadContainer = createElement('div', 'poster-container');
+        const previewPoster = createElement('img', 'poster');
+        const fileInput = createElement('input', 'poster-input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+
+            DbManager.getGenres().forEach(genre => {
+                const option = createElement('option');
+                option.value = genre.id;
+                option.textContent = genre.name;
+                selectgenre.appendChild(option);
+            });
+        const inputPoster = createElement('input', 'input-poster');
+            inputPoster.type = 'file';
+            inputPoster.accept = 'image/*';
+        const inputDescription = createElement('input', 'input-description');
+            inputDescription.type = 'text';
+
+        const save = createElement('button', 'save', 'Зберегти', () => {
+            const data = {
+                title: inputName.value,
+                year: inputYear.value,
+                genre_id: selectgenre.value,
+                rating: inputRating.value,
+                poster_url: inputPoster.value,
+                description: inputDescription.value
+            };
+            DbManager.addMovie(data);
+            window.location.href = '/';
+        });     
+
+        inputs.append(inputName, inputYear, selectgenre, inputPoster, inputDescription);
+        form.append(inputs, save);
+        body.append(header, main, footer);
+        main.appendChild(backToMain);
+        main.appendChild(title);
+        main.appendChild(poster);
+        main.appendChild(form);
+    }
+    // else
+    // {
+    //     body.append(header, main, footer);
+    //     main.appendChild(backToMain);
+    //     main.appendChild(title);
+    //     main.appendChild(poster);
+    // }
+}
 
 function openPopupPanel(type)
 {
@@ -156,17 +239,13 @@ function openPopupPanel(type)
         btn.className = 'popup-btn';
     const btn2 = document.createElement('button');
         btn2.className = 'popup-extra-btn';
-    
-    
+
     if(type == 'login')
     {
         popup.innerHTML = `
             <div class="popup-title">
+                <p>Вхід</p>
                 <div class="popup-close" onclick="closePopupPanel()">&times;</div>
-                <div>
-                    <h2>Вхід</h2>
-                    <p>Введіть email та пароль</p>
-                </div>
             </div>
         `;
 
@@ -227,11 +306,8 @@ function openPopupPanel(type)
     {
         popup.innerHTML = `
             <div class="popup-title">
+                <p> Реєстрація </p>
                 <div class="popup-close" onclick="closePopupPanel()">&times;</div>
-                <div>
-                     <h2>Реєстрація</h2>
-                     <p>Введіть email та пароль</p>
-                </div>
             </div>
         `;
 
@@ -303,4 +379,41 @@ function closePopupPanel() {
     if (popup) {
         popup.remove(); // Видаляє елемент, якщо він існує
     }
+}
+
+function popupProfilePanel() {
+    const body = document.getElementById('body');
+    const header = document.getElementById('header');
+        header.className = 'profile-header';
+    const main = document.getElementById('main');
+        main.className = 'profile-content';
+        
+    const popup = document.createElement('div');
+        popup.className = 'profile-popup';
+        popup.id = 'popup';
+    const backgraound = document.createElement('div');
+        backgraound.className = 'profile-background'; 
+    const closeBtn = document.createElement('div');
+    closeBtn.className = 'popup-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = () => {
+        closePopupPanel();
+    }
+
+    const title = document.createElement('h2');
+    title.textContent = 'Профіль';
+
+    const inputs = document.createElement('div');
+    inputs.className = 'profile-inputs';
+    const name = document.createElement('div');
+    name.className = 'profile-input';
+    const email = document.createElement('div');
+    email.className = 'profile-input';
+    const password = document.createElement('div');
+    password.className = 'profile-input';
+    if(isAdmin)
+    {
+
+    }
+
 }
