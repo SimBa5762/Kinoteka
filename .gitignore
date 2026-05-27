@@ -1,3 +1,4 @@
 *.sqlite
 *.json
 node_modules/
+posters/
