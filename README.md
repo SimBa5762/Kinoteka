@@ -20,4 +20,4 @@
 таблиця огляду містить ідентифікатори користувача, що його залишив, і фільму до якого він написаний, оцінку і дату створення
 
 схему таблиці і типи зв'язків між ними зображено на рис. 1.
-<img width="4116" height="2484" alt="image" src="https://github.com/user-attachments/assets/9dbb9d21-4088-4b13-9bd7-742a719d3b71" />
+<img width="1280" height="772" alt="image" src="https://github.com/user-attachments/assets/5a2bc2cd-ce6e-497d-b026-32091e39720e" />
