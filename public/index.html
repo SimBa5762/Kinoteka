@@ -17,7 +17,6 @@
                 <option value="rating">За рейтингом</option>
                 <option value="year">За роком</option>
             </select>
-            <button class="find" id="find" onClick="findTheFilms(searchInput.value, genreFilter.value, sortSelect.value)">Find</button>
         </div>
         <div class="user-controls" id="user-controls">
         </div>
@@ -34,6 +33,12 @@
                 </div>
             </div>
         </section>
+
+        <div class="pagination" id="pagination" style="display: none;">
+            <button class="btn-pagination" id="prevBtn" onclick="prevPage()">← Попередня</button>
+            <span class="page-info" id="pageInfo">Сторінка 1 з 1</span>
+            <button class="btn-pagination" id="nextBtn" onclick="nextPage()">Наступна →</button>
+        </div>
     </main>
     <div id="overlay" class="overlay" onclick="toggleProfilePanel()"></div>
 
@@ -60,13 +65,14 @@
                 <button type="submit" class="btn-primary btn-full">Зберегти зміни</button>
             </form>
         </div>
-
         <div class="panel-footer">
-            <button class="btn-outline btn-full" onclick="logout()">🚪 Вийти з акаунту</button>
-            <button class="btn-danger btn-full" onclick="deleteAccount()">🗑 Видалити акаунт</button>
+            <button id="logoutBtn" class="btn-outline btn-full" onclick="logout()">Вийти з акаунту</button>
+            <button id="deleteAccountBtn" class="btn-danger btn-full" onclick="deleteAccount()">🗑 Видалити акаунт</button>
         </div>
     </aside>
 
+    
+    <script src="profile.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

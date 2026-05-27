@@ -1,7 +1,8 @@
-
-
 let currentUser = null;
-let isAdmin = false;
+let isAdmin = false; // isAdmin використовується тільки в movie.js
+let currentPage = 1;
+let totalPages = 1;
+let totalMovies = 0;
 
 //завантажити постери для фільмів
 //зробити меню додавання фільму
@@ -43,9 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Перевіряємо роль (якщо ти зберіг її в сесії як 'admin' або 'owner')
         isAdmin = (user.role === 'admin' || user.role === 'owner');
         
-        // Оновлюємо інтерфейс: ховаємо кнопки входу, показуємо кнопку профілю
+        // Оновлюємо інтерфейс: показуємо кнопку профілю з іменем користувача
         userControls.innerHTML = `
-            <button class="btn-profile" onclick="popupProfilePanel()">👤 ${user.userName}</button>
+            <button class="btn-profile" onclick="handleProfileClick()">👤 ${user.userName}</button>
         `;
         
         // Перезавантажуємо фільми, щоб з'явилася кнопка "+" для адміна
@@ -55,29 +56,66 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(err => {
         console.log("Користувач не авторизований");
+        // Завжди показуємо тільки кнопку "Профіль"
         userControls.innerHTML = `
-            <button class="login" onclick="
-                closePopupPanel();
-                openPopupPanel('login')">Вхід</button>/
-            <button class="registration" onclick="
-                closePopupPanel(); 
-                openPopupPanel('register')">Реєстрація</button>
+            <button class="btn-profile" onclick="handleProfileClick()">👤 Профіль</button>
         `;
 
         loadMovies(); // Все одно вантажимо фільми як гість
     });
     // 2. Головна функція завантаження фільмів
-    function loadMovies() {
+    function loadMovies(page = 1) {
         // Формуємо URL з параметрами пошуку
         const url = new URL('/api/movies', window.location.origin);
         if (searchInput.value) url.searchParams.append('search', searchInput.value);
         if (genreFilter.value) url.searchParams.append('genre', genreFilter.value);
         if (sortSelect.value) url.searchParams.append('sort', sortSelect.value);
+        url.searchParams.append('page', page);
+        url.searchParams.append('limit', '10'); // Завантажуємо більше фільмів для кращого UX
 
         fetch(url)
             .then(res => res.json())
-            .then(movies => renderMovies(movies));
+            .then(result => {
+                if (result.movies) {
+                    currentPage = page;
+                    totalMovies = result.pagination?.total || result.movies.length;
+                    totalPages = Math.ceil(totalMovies / 10);
+                    renderMovies(result.movies);
+                    updatePagination();
+                } else {
+                    renderMovies(result); // Для зворотної сумісності
+                }
+            });
         console.log("Завантаження фільмів з параметрами:", url.searchParams.toString());
+    }
+
+    // Функції навігації пагінації
+    function prevPage() {
+        if (currentPage > 1) {
+            loadMovies(currentPage - 1);
+        }
+    }
+    function nextPage() {
+        if (currentPage < totalPages) {
+            loadMovies(currentPage + 1);
+        }
+    }
+
+    function updatePagination() {
+        const pagination = document.getElementById('pagination');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageInfo = document.getElementById('pageInfo');
+        nextBtn.onclick = nextPage;
+        prevBtn.onclick = prevPage;
+        if (totalPages > 1) {
+            pagination.style.display = 'flex';
+            pageInfo.textContent = `Сторінка ${currentPage} з ${totalPages}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        } else {
+            pagination.style.display = 'none';
+        }
     }
 
     // 3. Відображення карток
@@ -95,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAdmin) {
             const addCard = document.createElement('div');
             addCard.className = 'movie-card admin-add-card';
-            addCard.innerHTML = `<span>+</span>`;
+            addCard.innerHTML = `<span class="add-card-icon">Додати фільм</span>`;
             addCard.onclick = () => {
                 window.location.href = '/movie.html';
                 renderAddingMoviePage();
@@ -108,17 +146,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = 'movie-card';
             card.innerHTML = `
-                <img src="${movie.poster_url || 'https://via.placeholder.com/200x300'}" alt="Постер">
-                <h3>${movie.title} (${movie.year})</h3>
-                <p>Рейтинг: ⭐ ${movie.rating.toFixed(1)}</p>
-                <a href="/movie.html?id=${movie.id}">Детальніше</a>
+                <div class="card-content">
+                    <img src="${movie.poster_url || 'https://via.placeholder.com/200x300'}" alt="Постер">
+                    <h3>${movie.title} (${movie.year})</h3>
+                    <p>Рейтинг: ⭐ ${movie.rating.toFixed(1)}</p>
+                </div>
             `;
+
+            // Клік на картку для переходу на сторінку фільму
+            card.onclick = (e) => {
+                if (!e.target.classList.contains('delete-btn')) {
+                    window.location.href = `/movie.html?id=${movie.id}`;
+                }
+            };
 
             // Якщо Адмін - додаємо кнопку видалення
             if (isAdmin) {
                 const delBtn = document.createElement('button');
-                delBtn.textContent = '🗑 Видалити';
-                delBtn.onclick = () => deleteMovie(movie.id);
+                delBtn.className = 'delete-btn';
+                delBtn.textContent = '🗑';
+                delBtn.title = 'Видалити фільм';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteMovie(movie.id);
+                };
                 card.appendChild(delBtn);
             }
 
@@ -215,205 +266,4 @@ function renderMoviePage(props) {
     //     main.appendChild(title);
     //     main.appendChild(poster);
     // }
-}
-
-function openPopupPanel(type)
-{
-    
-
-    const body = document.getElementById('body');
-    const popup = document.createElement('div');
-        popup.className = 'popup';
-        popup.id = 'popup';
-    const inputs = document.createElement('div');
-        inputs.className = 'popup-inputs';
-    const email = document.createElement('div');
-        email.className = 'popup-email';
-    const password = document.createElement('div');
-        password.className = 'popup-password';
-    const name = document.createElement('div');
-        name.className = 'popup-name';
-    const btnsContainer = document.createElement('div');
-        btnsContainer.className = 'popup-btns-container';
-    const btn = document.createElement('button');
-        btn.className = 'popup-btn';
-    const btn2 = document.createElement('button');
-        btn2.className = 'popup-extra-btn';
-
-    if(type == 'login')
-    {
-        popup.innerHTML = `
-            <div class="popup-title">
-                <p>Вхід</p>
-                <div class="popup-close" onclick="closePopupPanel()">&times;</div>
-            </div>
-        `;
-
-        email.innerHTML = `
-            <label for="loginMail">Email:</label>
-            <input type="text" id="loginMail" placeholder="Email">
-        `;
-        inputs.appendChild(email);
-
-        
-        password.innerHTML = `
-            <label for="loginPass">Password:</label>
-            <input type="password" id="loginPass" placeholder="Password">
-        `;
-        inputs.appendChild(password);
-        popup.appendChild(inputs);
-        
-
-        
-        btn.textContent = 'Вхід';
-        btn.onclick = () => {
-            const email = document.getElementById('loginMail').value;
-            const password = document.getElementById('loginPass').value;
-
-            fetch('/api/users/login', 
-                {
-                    method: 'post',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if(data)
-                    {
-                        closePopupPanel();
-                        if(data.message == 'Login successful') location.reload();
-                        else if(data.message == 'User not found') alert('User not found! Please register');
-                        else if(data.message == 'Wrong password') alert('Wrong password! Try again');
-                    }else {
-                        alert(data.error);
-                    }
-                });
-        }
-
-        btn2.textContent = 'Реєстрація';
-        btn2.onclick = () => {
-            closePopupPanel();
-            openPopupPanel('register');
-        }
-        btnsContainer.appendChild(btn2);
-        btnsContainer.appendChild(btn);
-        popup.appendChild(btnsContainer);
-        body.appendChild(popup);
-    }
-    else if(type == 'register')
-    {
-        popup.innerHTML = `
-            <div class="popup-title">
-                <p> Реєстрація </p>
-                <div class="popup-close" onclick="closePopupPanel()">&times;</div>
-            </div>
-        `;
-
-        name.innerHTML = `
-            <label for="registerName">User name:</label>
-            <input type="text" id="registerName" placeholder="Name">
-        `;
-        inputs.appendChild(name);
-
-        email.innerHTML = `
-            <label for="registerMail">Email:</label>
-            <input type="text" id="registerMail" placeholder="Email">
-        `;
-        inputs.appendChild(email);
-
-        password.innerHTML = `
-            <label for="registerPass">Password:</label>
-            <input type="password" id="registerPass" placeholder="Password">
-        `;
-        inputs.appendChild(password);
-
-        popup.appendChild(inputs);
-
-
-        btn.textContent = 'Реєстрація';    
-        btn.onclick = () => {
-            fetch('/api/users/register', 
-                {
-                    method: 'post',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: document.getElementById('registerName').value,
-                        email: document.getElementById('registerMail').value,
-                        password: document.getElementById('registerPass').value
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if(data)
-                    {
-                        if(data.message == 'Registration successful')
-                            {
-                                alert('Registration successful! Please login');
-                                closePopupPanel();
-                                openPopupPanel('login');
-                            } 
-                        else if(data.message == 'User already exists') alert('User already exists! Please login');
-                    }else {
-                        alert(data.error);
-                    }
-                });
-        }
-        btn2.textContent = 'Вхід';
-        btn2.onclick = () => {
-            closePopupPanel();
-            openPopupPanel('login');
-        }
-        btnsContainer.appendChild(btn2);
-        btnsContainer.appendChild(btn);
-        popup.appendChild(btnsContainer);
-        body.appendChild(popup);
-    }
-}
-
-function closePopupPanel() {
-    const popup = document.getElementById('popup');
-    if (popup) {
-        popup.remove(); // Видаляє елемент, якщо він існує
-    }
-}
-
-function popupProfilePanel() {
-    const body = document.getElementById('body');
-    const header = document.getElementById('header');
-        header.className = 'profile-header';
-    const main = document.getElementById('main');
-        main.className = 'profile-content';
-        
-    const popup = document.createElement('div');
-        popup.className = 'profile-popup';
-        popup.id = 'popup';
-    const backgraound = document.createElement('div');
-        backgraound.className = 'profile-background'; 
-    const closeBtn = document.createElement('div');
-    closeBtn.className = 'popup-close';
-    closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => {
-        closePopupPanel();
-    }
-
-    const title = document.createElement('h2');
-    title.textContent = 'Профіль';
-
-    const inputs = document.createElement('div');
-    inputs.className = 'profile-inputs';
-    const name = document.createElement('div');
-    name.className = 'profile-input';
-    const email = document.createElement('div');
-    email.className = 'profile-input';
-    const password = document.createElement('div');
-    password.className = 'profile-input';
-    if(isAdmin)
-    {
-
-    }
-
 }

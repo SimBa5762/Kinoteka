@@ -1,7 +1,7 @@
 const session = require('express-session');
 
 const sessionConfig = session({
-    secret: 'твоє-супер-секретне-слово-яке-знає-тільки-сервер',
+    secret: 'super-secret-key',
     resave: false,
     saveUninitialized: false,
     cookie: {

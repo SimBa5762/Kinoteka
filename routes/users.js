@@ -2,16 +2,10 @@ const express = require('express');
 const router = express.Router();
 const dbManager = require('../public/dbManager');
 const bcrypt = require('bcrypt');
-const session = require('express-session');
-const { isAuthenticated, isAdmin, isOwner } = require('./middleware');
-router.use(
-    session({
-        secret: 'super-secret-key',
-        saveUninitialized: false,
-        cookie: { httpOnly: true },
-        resave: false
-    })
-);
+const { isAuthenticated, isAdmin, isOwner } = require('../middleware/auth');
+const sessionConfig = require('../config/session');
+
+router.use(sessionConfig);
 
 router.post('/login', async (req, res) => {
     try {
@@ -70,6 +64,32 @@ router.get('/profile', (req, res) => {
     }
 });
 
+router.post('/update-profile', async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json({ message: 'User not logged in' });
+        }
+
+        const { name, password } = req.body;
+        const userMail = req.session.user.userMail;
+
+        const updateData = { name };
+        if (password) {
+            const hash = await bcrypt.hash(password, 10);
+            updateData.password = hash;
+        }
+
+        await dbManager.updateUser(userMail, updateData);
+
+        // Обновляем сессию
+        req.session.user.userName = name;
+        
+        res.json({ message: 'Profile updated successfully' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.delete('/delete-account', async (req, res) => { // Змінено на DELETE для правильної REST архітектури
     try {
         if (req.session.user) {
@@ -86,12 +106,22 @@ router.delete('/delete-account', async (req, res) => { // Змінено на DE
 });
 
 router.post('/add-admin', isAuthenticated, isOwner, async (req, res) => {
-    const { name, email, password } = req.body;
-    const hash = await bcrypt.hash(password, 10);
-    
-    // Передаємо явно роль 'admin'
-    await dbManager.addUser({ name, mail: email, password: hash, role: 'admin' });
-    res.status(201).json({ message: 'Адміністратора успішно створено' });
+    try {
+        const { name, email, password } = req.body;
+        const existingUser = await dbManager.getUser(email);
+
+        if (existingUser) {
+            return res.status(400).json({ message: 'Користувач вже існує!' });
+        }
+
+        const hash = await bcrypt.hash(password, 10);
+
+        // Передаємо явно роль 'admin'
+        await dbManager.addUser({ name, mail: email, password: hash, role: 'admin' });
+        res.status(201).json({ message: 'Адміністратора успішно створено' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

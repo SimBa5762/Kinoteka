@@ -1,5 +1,6 @@
 const isAuthenticated = (req, res, next) => {
     if (req.session.user) {
+        req.user = req.session.user; // Встановлюємо req.user для використання в маршрутах
         next(); // Пропускаємо далі
     } else {
         res.status(401).json({ message: 'Будь ласка, увійдіть у систему' });
@@ -9,6 +10,7 @@ const isAuthenticated = (req, res, next) => {
 const isAdmin = (req, res, next) => {
     const role = req.session.user?.role;
     if (role === 'admin' || role === 'owner') {
+        req.user = req.session.user; // Встановлюємо req.user для використання в маршрутах
         next(); // Пропускаємо далі
     } else {
         res.status(403).json({ message: 'Доступ заборонено. Тільки для адміністраторів.' });
@@ -17,6 +19,7 @@ const isAdmin = (req, res, next) => {
 
 const isOwner = (req, res, next) => {
     if (req.session.user?.role === 'owner') {
+        req.user = req.session.user; // Встановлюємо req.user для використання в маршрутах
         next(); // Пропускаємо далі
     } else {
         res.status(403).json({ message: 'Доступ заборонено. Тільки для власника.' });
